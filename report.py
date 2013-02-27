@@ -6,6 +6,7 @@ import argparse
 import yaml
 import pprint
 import time
+import logging
 
 import jinja2
 from trollop import TrelloConnection
@@ -27,6 +28,9 @@ def find_board(org, name):
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('-f', '--config', default='trello.yml')
+    p.add_argument('-o', '--output')
+    p.add_argument('-v', '--verbose', action='store_true')
+    p.add_argument('-T', '--templates', default='templates')
     return p.parse_args()
 
 def main():
@@ -34,12 +38,19 @@ def main():
     with open(opts.config) as fd:
         cf = yaml.load(fd)
 
+    logging.basicConfig(
+            level = logging.INFO if opts.verbose else logging.WARN)
+
     tc = TrelloConnection(cf['trello']['apikey'], cf['trello']['token'])
     
     org = find_organization(tc.me, cf['report']['organization'])
+    logging.info('using organization: %s (%s)',
+            org.displayname, org.name)
     board = find_board(org, cf['report']['board'])
+    logging.info('using board: %s', board.name)
     report = {}
     for list in board.lists:
+        logging.info('processing list: %s', list.name)
         report[list.name] = []
         for card in list.cards:
             this_card = {
@@ -57,11 +68,13 @@ def main():
 
             report[list.name].append(this_card)
 
-    env = jinja2.Environment(
-            loader=jinja2.loaders.FileSystemLoader('templates'))
-    template = env.get_template('report.md')
-    print template.render(report=report,
-            date=time.strftime('%Y-%m-%d', time.localtime()))
+    logging.info('generating report')
+    with open(opts.output, 'w') if opts.output else sys.stdout as fd:
+        env = jinja2.Environment(
+                loader=jinja2.loaders.FileSystemLoader(opts.templates))
+        template = env.get_template('report.md')
+        print >>fd, template.render(report=report,
+                date=time.strftime('%Y-%m-%d', time.localtime()))
 
 if __name__ == '__main__':
     main()
