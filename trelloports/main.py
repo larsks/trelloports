@@ -21,8 +21,8 @@ def find_organization(me, name):
 
     raise KeyError(name)
 
-def find_board(org, name):
-    for board in org.boards:
+def find_board(src, name):
+    for board in src.boards:
         if board.name == name:
             return board
 
@@ -40,10 +40,14 @@ def gather_info(tc):
     global opts
     global config
 
-    org = find_organization(tc.me, config['report']['organization'])
-    logging.info('using organization: %s (%s)',
-            org.displayname, org.name)
-    board = find_board(org, config['report']['board'])
+    if 'organization' in config['report']:
+        org = find_organization(tc.me, config['report']['organization'])
+        logging.info('using organization: %s (%s)',
+                org.displayname, org.name)
+        board = find_board(org, config['report']['board'])
+    else:
+        board = find_board(tc.me, config['report']['board'])
+
     logging.info('using board: %s', board.name)
     report = {}
     for list in board.lists:
@@ -81,7 +85,8 @@ def generate_report(report):
         env = jinja2.Environment(loader=loader)
         template = env.get_template('report')
         print >>fd, template.render(report=report,
-                date=time.strftime('%Y-%m-%d', time.localtime()))
+                date=time.strftime('%Y-%m-%d',
+                    time.localtime())).encode('utf-8')
 
 
 def main():
