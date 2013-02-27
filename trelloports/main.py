@@ -9,10 +9,24 @@ import time
 import logging
 
 import jinja2
-from trollop import TrelloConnection
+import trollop
 
 opts = None
 config = None
+
+try:
+    test_connection = trollop.TrelloConnection('dummy', 'dummy')
+except TypeError:
+    import requests
+
+    # This works around a bug in trollop with requests 1.1.0.
+    class TrelloConnection (trollop.TrelloConnection):
+        def __init__(self, api_key, oauth_token):
+            self.session = requests.session()
+            self.key = api_key
+            self.token = oauth_token
+
+    trollop.TrelloConnection = TrelloConnection
 
 def find_organization(me, name):
     for org in me.organizations:
