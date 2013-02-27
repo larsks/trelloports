@@ -10,7 +10,7 @@ working on or expect to be working on over the next few weeks.
 ---
 
 {% for card in report['In Progress'] %}
-{% include "card.md" %}
+{% include "card" %}
 {% endfor %}
 
 Recently completed
@@ -21,7 +21,7 @@ These are projects that have recently been completed.
 ---
 
 {% for card in report['Done'] %}
-{% include "card.md" %}
+{% include "card" %}
 {% endfor %}
 
 Future projects
@@ -33,6 +33,6 @@ active progress over the next few weeks.
 ---
 
 {% for card in report['To Do'] %}
-{% include "card.md" %}
+{% include "card" %}
 {% endfor %}
 
